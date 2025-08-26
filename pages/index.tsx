@@ -1,36 +1,50 @@
-import { PROPERTYLISTINGSAMPLE } from "@/constants";
-import Pill from "@/components/Pill";
-import PropertyCard from "@/components/PropertyCard";
+// pages/index.tsx
+import axios from "axios";
+import { useEffect, useState } from "react";
+import PropertyCard from "@/components/property/PropertyCard";
 
-const filters = [
-  "Top Villa", "Self Checkin", "Free Parking", "Beachfront", "Pet Friendly", "Mountain View"
-];
+interface Property {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  image: string;
+}
 
 export default function Home() {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const response = await axios.get("/api/properties"); // 🔗 API endpoint
+        setProperties(response.data);
+      } catch (err) {
+        console.error("Error fetching properties:", err);
+        setError("Failed to load properties. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10">Loading properties...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center text-red-500 mt-10">{error}</p>;
+  }
+
   return (
-    <div className="space-y-10 py-6">
-      {/* Hero Section */}
-      <section
-        className="h-64 bg-cover bg-center text-white flex flex-col items-center justify-center rounded-lg"
-        style={{ backgroundImage: "url('https://example.com/hero.jpg')" }}
-      >
-        <h1 className="text-3xl font-bold">Find your favorite place here!</h1>
-        <p className="text-lg mt-2">The best prices for over 2 million properties worldwide.</p>
-      </section>
-
-      {/* Filter Section */}
-      <section className="flex flex-wrap">
-        {filters.map((filter) => (
-          <Pill key={filter} label={filter} />
-        ))}
-      </section>
-
-      {/* Listings Section */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {PROPERTYLISTINGSAMPLE.map((property, index) => (
-          <PropertyCard key={index} property={property} />
-        ))}
-      </section>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      {properties.map((property) => (
+        <PropertyCard key={property.id} property={property} />
+      ))}
     </div>
   );
 }
